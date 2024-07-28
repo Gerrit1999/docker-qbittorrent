@@ -58,33 +58,35 @@ RUN set -x \
         openssl \
         qt5-qtbase
 
-# 从构建阶段复制编译好的文件
-COPY --from=builder /usr/local/lib /usr/local/lib
-COPY --from=builder /usr/local/bin /usr/local/bin
-
 ENV HOME=/home/qbittorrent
-
-# 添加 qbittorrent 用户
-RUN set -x \
- && adduser -S -D -u 520 -g 520 -s /sbin/nologin qbittorrent \
- && mkdir -p $HOME/.config/qBittorrent \
- && mkdir -p $HOME/qbittorrent/.local/share/qBittorrent \
- && mkdir /downloads \
- && chmod go+rw -R $HOME/ /downloads \
- && ln -s $HOME/.config/qBittorrent /config \
- && ln -s $HOME/.local/share/qBittorrent /torrents \
- && su qbittorrent -s /bin/sh -c 'qbittorrent-nox -v'
-
-USER qbittorrent
 WORKDIR $HOME
+
+# 从构建阶段复制编译好的文件
+COPY --from=builder /usr/local/lib/libtorrent-rasterbar.so* /usr/local/lib/
+COPY --from=builder /usr/local/bin/qbittorrent-nox /usr/local/bin/
 
 # 默认配置文件
 COPY qBittorrent.conf /default/qBittorrent.conf
 COPY entrypoint.sh .
 
+# 添加 qbittorrent 用户
+RUN set -x \
+ && adduser -S -D -u 520 -s /sbin/nologin qbittorrent \
+ && mkdir -p .config/qBittorrent \
+ && mkdir -p .local/share/qBittorrent \
+ && mkdir /downloads \
+ && chmod go+rw -R /downloads \
+ && chown -R qbittorrent $HOME \
+ && chmod u+x entrypoint.sh \
+ && ln -s $HOME/.config/qBittorrent /config \
+ && ln -s $HOME/.local/share/qBittorrent /torrents \
+ && su qbittorrent -s /bin/sh -c 'qbittorrent-nox -v' 
+
 VOLUME ["/config", "/torrents", "/downloads"]
 
 EXPOSE 8181 48181
+
+USER qbittorrent                                                                                       
 
 ENTRYPOINT ["dumb-init", "./entrypoint.sh"]
 CMD ["qbittorrent-nox"]
