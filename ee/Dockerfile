@@ -4,7 +4,7 @@ FROM alpine:latest AS builder
 ARG HTTP_PROXY
 ARG HTTPS_PROXY
 ARG LIBTORRENT_VERSION=1.2.19
-ARG QBITTORRENTEE_VERSION=4.6.5.10
+ARG QBITTORRENTEE_VERSION=4.6.6.10
 
 # 设置代理
 ENV http_proxy=$HTTP_PROXY
@@ -57,6 +57,13 @@ RUN set -x \
         dumb-init \
         openssl \
         qt5-qtbase
+
+# 设置时区
+RUN set -x \
+ && apk add --no-cache tzdata \
+ && cp /usr/share/zoneinfo/Asia/Shanghai /etc/localtime \
+ && echo "Asia/Shanghai" > /etc/timezone \
+ && apk del tzdata
 
 ENV HOME=/home/qbittorrent
 WORKDIR $HOME
