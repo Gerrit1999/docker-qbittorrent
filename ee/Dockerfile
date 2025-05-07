@@ -3,8 +3,8 @@ FROM alpine:latest AS builder
 
 ARG HTTP_PROXY
 ARG HTTPS_PROXY
-ARG LIBTORRENT_VERSION=1.2.19
-ARG QBITTORRENTEE_VERSION=4.6.6.10
+ARG LIBTORRENT_VERSION=2.0.10
+ARG QBITTORRENTEE_VERSION=4.6.7.10
 
 # 设置代理
 ENV http_proxy=$HTTP_PROXY
@@ -76,24 +76,19 @@ COPY --from=builder /usr/local/bin/qbittorrent-nox /usr/local/bin/
 COPY qBittorrent.conf /default/qBittorrent.conf
 COPY entrypoint.sh .
 
-# 添加 qbittorrent 用户
 RUN set -x \
- && adduser -S -D -u 520 -s /sbin/nologin qbittorrent \
  && mkdir -p .config/qBittorrent \
  && mkdir -p .local/share/qBittorrent \
  && mkdir /downloads \
  && chmod go+rw -R /downloads \
- && chown -R qbittorrent $HOME \
  && chmod u+x entrypoint.sh \
  && ln -s $HOME/.config/qBittorrent /config \
  && ln -s $HOME/.local/share/qBittorrent /torrents \
- && su qbittorrent -s /bin/sh -c 'qbittorrent-nox -v' 
+ && qbittorrent-nox -v
 
 VOLUME ["/config", "/torrents", "/downloads"]
 
 EXPOSE 8181 48181
-
-USER qbittorrent                                                                                       
 
 ENTRYPOINT ["dumb-init", "./entrypoint.sh"]
 CMD ["qbittorrent-nox"]
